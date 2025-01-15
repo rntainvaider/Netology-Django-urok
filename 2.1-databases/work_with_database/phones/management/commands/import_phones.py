@@ -8,10 +8,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         pass
 
+    help = "Импорт телефонов из CSV"
+
     def handle(self, *args, **options):
-        with open("phones.csv", "r") as file:
-            phones = list(csv.DictReader(file, delimiter=";"))
-            for row in phones:
+        with open("phones.csv", "r", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
                 phone = Phone(
                     id=row["id"],
                     name=row["name"],

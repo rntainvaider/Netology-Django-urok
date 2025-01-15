@@ -1,0 +1,16 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ phone.name }}</title>
+</head>
+<body>
+    <h1>{{ phone.name }}</h1>
+    <img src="{{ phone.image.url }}" alt="{{ phone.name }}" style="max-width: 300px;">
+    <p>Цена: {{ phone.price }}$</p>
+    <p>Дата выхода: {{ phone.release_date }}</p>
+    <p>Поддержка LTE: {{ phone.lte_exists|yesno:"Да,Нет" }}</p>
+</body>
+</html>
