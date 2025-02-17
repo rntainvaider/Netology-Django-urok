@@ -1,14 +1,20 @@
 from rest_framework import serializers
 
+from logistic.models import Product, StockProduct
+
 
 class ProductSerializer(serializers.ModelSerializer):
-    # настройте сериализатор для продукта
-    pass
+    class Meta:
+        model = Product
+        fields = ["id", "title", "description"]
 
 
 class ProductPositionSerializer(serializers.ModelSerializer):
-    # настройте сериализатор для позиции продукта на складе
-    pass
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+
+    class Meta:
+        model = StockProduct
+        fields = ["id", "product", "quantity", "price"]
 
 
 class StockSerializer(serializers.ModelSerializer):
@@ -18,7 +24,7 @@ class StockSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # достаем связанные данные для других таблиц
-        positions = validated_data.pop('positions')
+        positions = validated_data.pop("positions")
 
         # создаем склад по его параметрам
         stock = super().create(validated_data)
@@ -26,12 +32,14 @@ class StockSerializer(serializers.ModelSerializer):
         # здесь вам надо заполнить связанные таблицы
         # в нашем случае: таблицу StockProduct
         # с помощью списка positions
+        for position_data in positions:
+            StockProduct.objects.create(stock=stock, **position_data)
 
         return stock
 
     def update(self, instance, validated_data):
         # достаем связанные данные для других таблиц
-        positions = validated_data.pop('positions')
+        positions = validated_data.pop("positions")
 
         # обновляем склад по его параметрам
         stock = super().update(instance, validated_data)
@@ -39,5 +47,10 @@ class StockSerializer(serializers.ModelSerializer):
         # здесь вам надо обновить связанные таблицы
         # в нашем случае: таблицу StockProduct
         # с помощью списка positions
+
+        instance.positions.all().delete()
+
+        for position_data in positions:
+            StockProduct.objects.create(stock=instance, **position_data)
 
         return stock
