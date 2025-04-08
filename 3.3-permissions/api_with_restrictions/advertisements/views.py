@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.throttling import UserRateThrottle
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -9,8 +9,12 @@ from .serializers import AdvertisementSerializer
 from .filters import AdvertisementFilter
 
 
-class AdvertisementThrottle(UserRateThrottle):
-    rate = "10/min"
+class AdvertisementUserThrottle(UserRateThrottle):
+    scope = "advertisement_user"
+
+
+class AdvertisementAnonThrottle(AnonRateThrottle):
+    scope = "advertisement_anon"
 
 
 class AdvertisementViewSet(ModelViewSet):
@@ -38,3 +42,23 @@ class AdvertisementViewSet(ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().destroy(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """Запрещаем обновление чужих объявлений."""
+        instance = self.get_object()
+        if instance.author != request.user:
+            return Response(
+                {"detail": "Обновление чужого объявления запрещено."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Запрещаем частичное обновление чужих объявлений."""
+        instance = self.get_object()
+        if instance.author != request.user:
+            return Response(
+                {"detail": "Обновление чужого объявления запрещено."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().partial_update(request, *args, **kwargs)
